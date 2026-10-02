@@ -1,7 +1,7 @@
 {
   "name": "fig2indesign",
-  "version": "0.2.0",
-  "description": "Deterministic Paper, HTML and Figma to Adobe InDesign conversion on your own Mac",
+  "version": "0.3.0",
+  "description": "Deterministic Figma to Adobe InDesign conversion on your own Mac",
   "license": "MIT",
   "type": "module",
   "repository": "https://github.com/AsianPelican/fig2indesign",

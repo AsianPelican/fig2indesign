@@ -1,11 +1,10 @@
-// Shared build flow: Figma scene -> ExtendScript -> InDesign -> pixel diff.
+// Shared build flow: scene -> ExtendScript -> InDesign -> pixel diff.
 
 import { mkdir, writeFile } from "fs/promises";
 import { readFileSync, writeFileSync } from "fs";
 import { spawnSync } from "child_process";
 import { PNG } from "pngjs";
 import path from "path";
-import { measure } from "./measure";
 import { emitJsx } from "./emit";
 import { runJsx } from "./indesign";
 import { comparePngs } from "./compare";
@@ -185,15 +184,6 @@ export function summarizeContainerGeometry(containers: ContainerGeometryRecord[]
     ...(worst ? {worstContainer: {page: worst.page, node: worst.node, sourceType: worst.sourceType, deltaPx: worst.deltaPx}} : {}),
     containers: withDelta,
   };
-}
-
-export async function buildFromHtml(htmlFiles: string[], opts: BuildOptions): Promise<BuildReport> {
-  const started = performance.now();
-  const outDir = path.resolve(opts.outDir);
-  await mkdir(outDir, { recursive: true });
-
-  const { scene, screenshots } = await measure(htmlFiles, outDir, opts.docName);
-  return buildFromScene(scene, screenshots, {...opts, startedAtMs: started});
 }
 
 export async function buildFromScene(scene: Scene, screenshots: string[], opts: BuildOptions): Promise<BuildReport> {
@@ -390,7 +380,7 @@ export async function buildFromScene(scene: Scene, screenshots: string[], opts: 
       if (referenceImage.width !== proofImage.width || referenceImage.height !== proofImage.height) {
         reference = path.join(outDir, `reference-${i + 1}.png`);
         const resized = spawnSync("sips", ["-z", String(proofImage.height), String(proofImage.width), screenshots[i], "--out", reference], {encoding: "utf8"});
-        if (resized.status !== 0) throw new Error(`could not normalize Figma reference ${i + 1}: ${resized.stderr}`);
+        if (resized.status !== 0) throw new Error(`could not normalize source reference ${i + 1}: ${resized.stderr}`);
       }
       const diff = comparePngs(reference, proof, path.join(outDir, `diff-${i + 1}.png`));
       pages[i].diffPct = Math.round(diff.diffPct * 100) / 100;

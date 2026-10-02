@@ -2,7 +2,7 @@
 import {buildFromFigma} from "./src/figma/build";
 
 function usage(): never {
-  console.error("Usage:\n  bun bridge.ts serve\n  bun bridge.ts figma <file-key-or-url> <frame-id...> [--name name] [--out out] [--cache cache] [--no-indesign]\n  bun bridge.ts html <artboard.html...> [--name name] [--out out] [--no-indesign]");
+  console.error("Usage:\n  bun bridge.ts serve\n  bun bridge.ts figma <file-key-or-url> <frame-id...> [--name name] [--out out] [--cache cache] [--no-indesign]");
   process.exit(1);
 }
 
@@ -28,24 +28,6 @@ if (args[0] === "serve") {
     else frames.push(value);
   }
   const report = await buildFromFigma({target, frames, docName, outDir, cacheDir, runInDesign});
-  console.log(JSON.stringify(report, null, 2));
-  if (!report.ok) process.exit(1);
-} else if (args[0] === "html") {
-  const {buildFromHtml} = await import("./src/pipeline");
-  const files: string[] = [];
-  let docName = "export";
-  let outDir = "out";
-  let runInDesign = true;
-  for (let index = 1; index < args.length; index++) {
-    const value = args[index];
-    if (value === "--name") { if (!args[index + 1]) usage(); docName = args[++index]; }
-    else if (value === "--out") { if (!args[index + 1]) usage(); outDir = args[++index]; }
-    else if (value === "--no-indesign") runInDesign = false;
-    else if (value.startsWith("--")) usage();
-    else files.push(value);
-  }
-  if (!files.length) usage();
-  const report = await buildFromHtml(files, {docName, outDir, runInDesign});
   console.log(JSON.stringify(report, null, 2));
   if (!report.ok) process.exit(1);
 } else usage();

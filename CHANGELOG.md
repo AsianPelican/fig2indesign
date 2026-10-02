@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0 - 2026-10-02
+
+- Focus this package on Figma input, retaining the development plugin, localhost bridge, native writer, and fidelity reports.
+- Move Paper JSX and HTML input to the independent paper2indesign package.
+- Preserve the shared scene writer and all existing Figma conversion features.
+
 ## 0.2.0 - 2026-10-02
 
 - Preserve full CSS image boxes through cover/contain positioning before page, fold, and crop-frame clipping.

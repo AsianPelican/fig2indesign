@@ -47,17 +47,6 @@ FIGMA_TOKEN=your-token bun bridge.ts figma FILE_KEY 1:2 1:3 --name export --out 
 
 Use `--no-indesign` to build the scene without launching InDesign.
 
-## Paper and HTML input
-
-The same converter accepts ordered HTML artboards exported from Paper. Convert inline-style JSX, then build the document:
-
-```sh
-bun src/paper2html.ts input.jsx input.html
-bun bridge.ts html input.html --name export --out out
-```
-
-Library callers can use `jsxToHtml`, `buildFromHtml`, and `buildFromScene`. `BuildOptions.printPreset` configures physical facing pages and optional print bleed; edge images use mirrored pixels outside trim at the original design scale. Image padding requires ImageMagick (`magick`).
-
 ## Output
 
 - `export.indd` and `export.idml`

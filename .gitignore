@@ -1,5 +1,4 @@
 node_modules/
-plugin/dist/
 runtime/
 out/
 cache/
@@ -31,3 +30,11 @@ ISA.md
 *.zip
 *.mov
 *.mp4
+
+*.webp
+*.gif
+*.ttc
+*.otc
+*.eps
+
+plugin/dist/

@@ -1,6 +1,9 @@
 {
   "compilerOptions": {
-    "lib": ["ESNext", "DOM"],
+    "lib": [
+      "ESNext",
+      "DOM"
+    ],
     "target": "ESNext",
     "module": "Preserve",
     "moduleResolution": "Bundler",
@@ -12,6 +15,12 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true
   },
-  "include": ["bridge.ts", "setup.ts", "src/**/*.ts"],
-  "exclude": ["plugin"]
+  "include": [
+    "bridge.ts",
+    "setup.ts",
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "plugin"
+  ]
 }
