@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    :root { color-scheme: light dark; font: 12px/1.45 Inter, system-ui, sans-serif; }
+    body { margin: 0; padding: 16px; color: var(--figma-color-text); background: var(--figma-color-bg); }
+    main, .card { display: grid; gap: 12px; } h1, p { margin: 0; }
+    h1 { font-size: 16px; } .card { padding: 12px; border: 1px solid var(--figma-color-border); border-radius: 8px; background: var(--figma-color-bg-secondary); }
+    .row { display: flex; align-items: center; gap: 8px; } .grow { flex: 1; min-width: 0; }
+    .muted { color: var(--figma-color-text-secondary); } .error { color: var(--figma-color-text-danger); }
+    button { height: 34px; padding: 0 11px; border: 1px solid var(--figma-color-border); border-radius: 5px; background: var(--figma-color-bg); color: var(--figma-color-text); font-weight: 600; cursor: pointer; }
+    button.primary { width: 100%; height: 40px; border-color: var(--figma-color-bg-brand); background: var(--figma-color-bg-brand); color: var(--figma-color-text-onbrand); }
+    button:disabled { opacity: .45; cursor: default; } ol { max-height: 125px; margin: 0; padding-left: 22px; overflow: auto; }
+    .outputs { display: none; gap: 7px; }
+  </style>
+</head>
+<body>
+<main>
+  <header><h1>Export to InDesign</h1><p class="muted">Build locally with your installed InDesign.</p></header>
+  <section class="card"><strong id="connection">Checking localhost bridge…</strong><button id="retry">Retry connection</button></section>
+  <section class="card"><div class="row"><strong class="grow">Selected top-level frames</strong><span id="count">0</span></div><ol id="frames"><li class="muted">Select one or more frames.</li></ol></section>
+  <section class="card"><div class="row"><strong id="stage" class="grow">Ready</strong><span id="elapsed" class="muted">0.0s</span></div><p id="detail" class="muted">Start the bridge, then export the selection.</p><div id="outputs" class="outputs"><button data-kind="indd">Download INDD</button><button data-kind="idml">Download IDML</button><button data-kind="report">Download report</button></div></section>
+  <button id="export" class="primary" disabled>Export selected frames</button>
+</main>
+<script>
+  const BRIDGE = 'http://127.0.0.1:41416';
+  const el = id => document.getElementById(id);
+  let state = {request: {fileKey: '', frameIds: [], frameNames: []}, activeJobId: ''};
+  let connected = false, running = false, terminal = null;
+  const saveJob = jobId => parent.postMessage({pluginMessage: {type: 'save-active-job', jobId}}, '*');
+  function update() { const count = state.request.frameIds.length; el('count').textContent = String(count); el('export').disabled = !connected || running || !state.request.fileKey || !count; el('export').textContent = running ? 'Exporting locally…' : `Export ${count || ''} selected frame${count === 1 ? '' : 's'}`.replace('  ', ' '); }
+  function renderSelection() { const list = el('frames'); list.replaceChildren(); for (const name of state.request.frameNames) { const item = document.createElement('li'); item.textContent = name; list.appendChild(item); } if (!state.request.frameNames.length) { const item = document.createElement('li'); item.className = 'muted'; item.textContent = 'Select top-level FRAME nodes.'; list.appendChild(item); } update(); }
+  async function probe() { const response = await fetch(`${BRIDGE}/v1/health`); if (!response.ok) throw Error(`Bridge returned ${response.status}`); connected = true; el('connection').textContent = 'Connected to localhost'; el('connection').className = ''; update(); }
+  function renderEvent(event) { el('elapsed').textContent = `${Number(event.elapsed || 0).toFixed(1)}s`; if (event.type === 'accepted' || event.type === 'running') { el('stage').textContent = event.stage; el('detail').textContent = `Local job ${event.jobId}`; } if (event.type === 'done') { terminal = event; running = false; state.activeJobId = ''; saveJob(''); el('stage').textContent = 'Export complete'; el('detail').textContent = `${event.pages} page(s) · ${event.summary.linesWithin1px}/${event.summary.measurableLines} lines within 1px · worst ${event.summary.worstLinePx.toFixed(2)}px`; el('outputs').style.display = 'grid'; update(); return true; } if (event.type === 'error') { running = false; state.activeJobId = ''; saveJob(''); el('stage').textContent = 'Export stopped'; el('detail').className = 'error'; el('detail').textContent = event.error; update(); return true; } return false; }
+  async function poll(jobId) { running = true; update(); while (state.activeJobId === jobId) { try { const response = await fetch(`${BRIDGE}/v1/jobs/${jobId}`); const body = await response.json(); if (!response.ok) throw Error(body.error || `Bridge returned ${response.status}`); connected = true; if (renderEvent(body)) return; } catch (error) { connected = false; el('connection').textContent = 'Reconnecting to localhost…'; el('detail').textContent = error.message; update(); } await new Promise(resolve => setTimeout(resolve, 1000)); } }
+  async function startExport() { running = true; terminal = null; el('outputs').style.display = 'none'; el('detail').className = 'muted'; update(); try { const response = await fetch(`${BRIDGE}/v1/jobs`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({kind: 'figma', ...state.request})}); const body = await response.json(); if (!response.ok) throw Error(body.error || `Bridge returned ${response.status}`); state.activeJobId = body.jobId; saveJob(body.jobId); renderEvent(body); await poll(body.jobId); } catch (error) { renderEvent({type: 'error', jobId: '', elapsed: 0, error: error.message}); } }
+  async function sha256(bytes) { const digest = await crypto.subtle.digest('SHA-256', bytes); return [...new Uint8Array(digest)].map(value => value.toString(16).padStart(2, '0')).join(''); }
+  async function download(kind) { const artifact = terminal && terminal.artifacts[kind]; if (!artifact) return; const response = await fetch(`${BRIDGE}${artifact.downloadPath}`); if (!response.ok) throw Error(`${kind} download returned ${response.status}`); const bytes = await response.arrayBuffer(); if (bytes.byteLength !== artifact.size || await sha256(bytes) !== artifact.sha256) throw Error(`${kind} download failed integrity check`); const url = URL.createObjectURL(new Blob([bytes])); const anchor = document.createElement('a'); anchor.href = url; anchor.download = artifact.name; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
+  window.onmessage = event => { const message = event.data.pluginMessage; if (!message || message.type !== 'state') return; state = message; renderSelection(); void probe().then(() => state.activeJobId ? poll(state.activeJobId) : undefined).catch(error => { connected = false; el('connection').textContent = error.message; el('connection').className = 'error'; update(); }); };
+  el('retry').onclick = () => void probe().catch(error => { el('connection').textContent = error.message; el('connection').className = 'error'; });
+  el('export').onclick = () => void startExport();
+  document.querySelectorAll('[data-kind]').forEach(button => button.onclick = () => void download(button.dataset.kind).catch(error => { el('detail').className = 'error'; el('detail').textContent = error.message; }));
+</script>
+</body>
+</html>

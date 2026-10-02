@@ -1,0 +1,13 @@
+{
+  "name": "Figma to InDesign",
+  "id": "fig2indesign-local",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["none"],
+    "devAllowedDomains": ["http://127.0.0.1:41416"]
+  }
+}

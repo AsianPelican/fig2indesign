@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "types": ["bun"],
+    "lib": ["ESNext", "DOM"],
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "include": ["test/**/*.ts", "src/selection.ts"]
+}

@@ -1,0 +1,33 @@
+node_modules/
+plugin/dist/
+runtime/
+out/
+cache/
+*.indd
+*.idml
+*.log
+.DS_Store
+
+# Private runtime and generated artifacts
+ISA.md
+.env
+.env.*
+*.indd
+*.idml
+*.pdf
+*.pptx
+*.png
+*.jpg
+*.jpeg
+*.ttf
+*.otf
+*.woff
+*.woff2
+
+# Local instructions and private task material
+*.eps
+*.psd
+*.svg
+*.zip
+*.mov
+*.mp4
